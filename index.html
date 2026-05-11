@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
   :root {
     --bg:          #f0f4ff;
@@ -22,8 +21,8 @@
     --accent-h:    #0340b0;
     --accent-dim:  rgba(4,82,216,0.08);
     --accent-dim2: rgba(4,82,216,0.04);
-    --red:         #d83404;
-    --red-dim:     rgba(216,52,4,0.08);
+    --red:         #c0392b;
+    --red-dim:     rgba(192,57,43,0.08);
     --green:       #0a7a4b;
     --green-dim:   rgba(10,122,75,0.08);
     --warn:        #b45309;
@@ -34,37 +33,22 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; }
-
   body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0; height: 300px;
-    background: linear-gradient(150deg, #0340b0 0%, #0452D8 45%, #3a76f0 100%);
+    content: ''; position: fixed; top: 0; left: 0; right: 0; height: 300px;
+    background: linear-gradient(150deg, #0340b0 0%, #0452D8 50%, #3a76f0 100%);
     pointer-events: none; z-index: 0;
   }
-
-  .container { max-width: 520px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; position: relative; z-index: 1; }
+  .container { max-width: 540px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; position: relative; z-index: 1; }
 
   /* HEADER */
   .header { margin-bottom: 1.75rem; }
-  .header-tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 20px; padding: 4px 13px;
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    color: rgba(255,255,255,0.9); letter-spacing: 0.1em; text-transform: uppercase;
-    margin-bottom: 14px;
-  }
+  .header-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.28); border-radius: 20px; padding: 4px 13px; font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.9); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
   .header h1 { font-size: clamp(2rem, 7vw, 2.7rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.03em; color: #fff; }
   .header h1 span { opacity: 0.65; }
   .header p { color: rgba(255,255,255,0.68); font-size: 14px; margin-top: 10px; line-height: 1.6; }
 
   /* SIGNED-IN BAR */
-  .signed-in-bar {
-    display: none; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22);
-    border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 12px;
-    color: rgba(255,255,255,0.9); font-size: 13px;
-  }
+  .signed-in-bar { display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 12px; color: rgba(255,255,255,0.9); font-size: 13px; }
   .signed-in-bar.visible { display: flex; }
   .dot-green { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(74,222,128,0.28); }
   .signout-btn { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.55); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
@@ -73,7 +57,6 @@
   /* STEPS */
   .step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; box-shadow: var(--shadow); transition: border-color 0.2s, opacity 0.2s; }
   .step.locked { opacity: 0.5; pointer-events: none; }
-  .step.done { border-color: rgba(4,82,216,0.22); }
   .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .step-num { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); flex-shrink: 0; transition: all 0.2s; }
   .step-num.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
@@ -104,20 +87,20 @@
 
   /* BUTTONS */
   .btn { width: 100%; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border2); background: transparent; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; }
-  .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   .btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 10px rgba(4,82,216,0.3); }
-  .btn-accent:hover { background: var(--accent-h); border-color: var(--accent-h); color: #fff; }
+  .btn-accent:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); color: #fff; }
   .btn + .btn { margin-top: 8px; }
   .btn-google { background: #fff; color: #3c3c3c; border-color: var(--border2); box-shadow: var(--shadow); }
-  .btn-google:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .btn-google:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
   /* STATUS */
   .status { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; line-height: 1.5; border: 1px solid transparent; }
-  .status.info    { background: var(--accent-dim); color: var(--accent); border-color: rgba(4,82,216,0.18); }
-  .status.success { background: var(--green-dim);  color: var(--green);  border-color: rgba(10,122,75,0.2); }
-  .status.error   { background: var(--red-dim);    color: var(--red);    border-color: rgba(216,52,4,0.2); }
-  .status.warning { background: var(--warn-dim);   color: var(--warn);   border-color: rgba(180,83,9,0.2); }
+  .status.info    { background: var(--accent-dim);  color: var(--accent); border-color: rgba(4,82,216,0.18); }
+  .status.success { background: var(--green-dim);   color: var(--green);  border-color: rgba(10,122,75,0.2); }
+  .status.error   { background: var(--red-dim);     color: var(--red);    border-color: rgba(192,57,43,0.2); }
+  .status.warning { background: var(--warn-dim);    color: var(--warn);   border-color: rgba(180,83,9,0.2); }
 
   /* PROGRESS */
   .progress-wrap { margin-top: 12px; }
@@ -136,12 +119,16 @@
   /* FOOTER */
   .footer { text-align: center; margin-top: 2.5rem; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
 
+  /* Hidden canvas for PDF rendering */
+  #pdf-canvas { display: none; }
+
   @media (max-width: 480px) { .container { padding: 1.5rem 1rem 3rem; } }
 </style>
 </head>
 <body>
-<div class="container">
+<canvas id="pdf-canvas"></canvas>
 
+<div class="container">
   <div class="header">
     <div class="header-tag">✦ HMS Payslip Tool</div>
     <h1>Payslip<br><span>Renamer</span></h1>
@@ -150,7 +137,7 @@
 
   <div class="signed-in-bar" id="signed-in-bar">
     <span class="dot-green"></span>
-    <span id="signed-in-label">Signed in to Google</span>
+    <span id="signed-in-email">Signed in to Google</span>
     <button class="signout-btn" onclick="signOut()">Sign out</button>
   </div>
 
@@ -218,18 +205,20 @@
     </div>
     <div class="or-divider"><span>or</span></div>
     <button class="btn" id="dl-btn" onclick="downloadFile()" disabled>⬇️ Download renamed PDF to device</button>
-    <div class="info-box">🛡️ Only creates new files in your folder. Never reads, modifies, or deletes existing files. Saved PDF will have <strong>no password</strong>.</div>
+    <div class="info-box">🛡️ Only creates new files in your folder. Never reads, modifies, or deletes existing files. The saved PDF will have <strong>no password</strong>.</div>
   </div>
 
-  <div class="footer">Built for Warut · HMS Payslip Tool · v3.0</div>
+  <div class="footer">Built for Warut · HMS Payslip Tool · v4.0</div>
 </div>
 
 <script>
+// ── CONFIG ────────────────────────────────────────────────
 const FOLDER_ID = '10CUfI2j_8AjW1oY-RFoSWa0T2duG749p';
 const CLIENT_ID = '544858630647-ndaad2g7ft8vnluipqfa8f5qjhbafp7o.apps.googleusercontent.com';
 const SCOPES    = 'https://www.googleapis.com/auth/drive.file';
-const TOKEN_KEY = 'payslip_gtoken';
-const TOKEN_EXP = 'payslip_gtoken_exp';
+const TOKEN_KEY = 'payslip_token';
+const TOKEN_EXP = 'payslip_token_exp';
+// ─────────────────────────────────────────────────────────
 
 const THAI_MONTHS = {
   'มกราคม':'01','กุมภาพันธ์':'02','มีนาคม':'03',
@@ -243,23 +232,30 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 let pdfBytes = null, detectedName = null, accessToken = null;
 
-function unlock(id) { document.getElementById(id).classList.remove('locked'); }
+// ── UI HELPERS ────────────────────────────────────────────
+function unlock(id)  { document.getElementById(id).classList.remove('locked'); }
+function lock(id)    { document.getElementById(id).classList.add('locked'); }
 function markDone(id) {
   const el = document.getElementById(id);
   el.classList.remove('active'); el.classList.add('done'); el.textContent = '✓';
+}
+function markActive(id, label) {
+  const el = document.getElementById(id);
+  el.classList.remove('done'); el.classList.add('active'); el.textContent = label;
 }
 function setStatus(id, type, msg) {
   document.getElementById(id).innerHTML = `<div class="status ${type}">${msg}</div>`;
 }
 function clearStatus(id) { document.getElementById(id).innerHTML = ''; }
 
-// Drag & drop
+// ── DRAG & DROP ───────────────────────────────────────────
 const dz = document.getElementById('dropzone');
 dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
-document.getElementById('filein').addEventListener('change', e => handleFile(e.target.files[0]));
+document.getElementById('filein').addEventListener('change', e => { handleFile(e.target.files[0]); });
 
+// ── MAIN FILE HANDLER ─────────────────────────────────────
 async function handleFile(file) {
   if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
     setStatus('status1', 'error', '❌ Please select a PDF file.'); return;
@@ -269,20 +265,29 @@ async function handleFile(file) {
   unlock('step2');
 
   const rawBytes = new Uint8Array(await file.arrayBuffer());
-  const pw = document.getElementById('pw-input').value;
+  const pw = document.getElementById('pw-input').value.trim();
 
   try {
-    // Extract text (pdf.js handles password-protected files)
-    const pdf = await pdfjsLib.getDocument({ data: rawBytes.slice(), password: pw }).promise;
+    // STEP A: Use pdf.js to read text (handles encryption natively)
+    const loadTask = pdfjsLib.getDocument({
+      data: rawBytes.slice(),
+      password: pw,
+      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+      cMapPacked: true,
+    });
+    const pdfDoc = await loadTask.promise;
+
     let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const tc = await (await pdf.getPage(i)).getTextContent();
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      const page = await pdfDoc.getPage(i);
+      const tc   = await page.getTextContent();
       text += tc.items.map(t => t.str).join(' ') + '\n';
     }
 
+    // STEP B: Detect pay period from Thai text
     const parsed = parsePayslip(text);
     if (!parsed) {
-      setStatus('status1', 'error', '❌ Could not detect pay period. Check password or file.'); return;
+      setStatus('status1', 'error', '❌ Could not detect pay period. Check password or file format.'); return;
     }
 
     const { month, year, monthNum } = parsed;
@@ -296,21 +301,27 @@ async function handleFile(file) {
     markDone('num1'); markDone('num2');
     setStatus('status2', 'success', `✅ Detected: <strong>${month} ${year}</strong> → <strong>${detectedName}</strong>`);
 
-    // Remove password protection — save as clean unencrypted PDF
-    setStatus('status1', 'info', '⏳ Removing password protection…');
-    pdfBytes = await decryptToClean(rawBytes, pw);
-    setStatus('status1', 'success', '✅ PDF ready — password removed.');
+    // STEP C: Re-render each page onto canvas → build new clean PDF (no password)
+    setStatus('status1', 'info', '⏳ Removing password protection (this may take a moment)…');
+    pdfBytes = await renderPdfToCleanPdf(pdfDoc);
+    setStatus('status1', 'success', '✅ PDF ready — password removed successfully.');
 
     unlock('step3');
-    document.getElementById('num3').classList.add('active');
+    markActive('num3', '3');
     document.getElementById('dl-btn').disabled = false;
     if (accessToken) showUploadReady();
 
   } catch (err) {
-    setStatus('status1', 'error', '❌ ' + (err.message || 'Wrong password or unreadable file.'));
+    console.error(err);
+    if (err.message && err.message.toLowerCase().includes('password')) {
+      setStatus('status1', 'error', '❌ Wrong password. Please check and try again.');
+    } else {
+      setStatus('status1', 'error', '❌ Error reading PDF: ' + err.message);
+    }
   }
 }
 
+// ── PARSE THAI PAYSLIP ────────────────────────────────────
 function parsePayslip(text) {
   const patterns = [
     /งวด[:\s]+เดือน\s+([ก-๙]+)\s+ปี\s+(\d{4})/,
@@ -320,23 +331,257 @@ function parsePayslip(text) {
     const m = text.match(rx);
     if (m) {
       const thaiMonth = m[1].trim();
-      const year = parseInt(m[2]);
-      const monthNum = THAI_MONTHS[thaiMonth];
+      const year      = parseInt(m[2]);
+      const monthNum  = THAI_MONTHS[thaiMonth];
       if (monthNum) return { month: thaiMonth, year, monthNum };
     }
   }
   return null;
 }
 
-async function decryptToClean(srcBytes, password) {
-  // Load with password, then re-save without any encryption
-  const doc = await PDFLib.PDFDocument.load(srcBytes, {
-    password, ignoreEncryption: false, throwOnInvalidObject: false, updateMetadata: false
-  });
-  // Saving without specifying encryption removes all password protection
-  return await doc.save({ useObjectStreams: false });
+// ── PDF DECRYPTION: render pages to canvas → new clean PDF ─
+// This approach ALWAYS works regardless of encryption type,
+// because pdf.js renders the visual content, then we encode
+// each page as a JPEG into a fresh unencrypted PDF.
+async function renderPdfToCleanPdf(pdfDoc) {
+  const canvas  = document.getElementById('pdf-canvas');
+  const ctx     = canvas.getContext('2d');
+  const scale   = 2.0; // high quality
+  const jpegParts = [];
+
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page     = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale });
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const base64      = jpegDataUrl.split(',')[1];
+    jpegParts.push({
+      base64,
+      width:  viewport.width,
+      height: viewport.height,
+      widthPt:  viewport.width  / scale,
+      heightPt: viewport.height / scale,
+    });
+  }
+
+  // Build a minimal valid PDF containing the JPEG images
+  return buildPdfFromJpegs(jpegParts);
 }
 
+// ── BUILD CLEAN PDF FROM JPEG IMAGES ─────────────────────
+function buildPdfFromJpegs(pages) {
+  // Minimal PDF structure — one page per JPEG, no encryption
+  const objects = [];
+  const offsets = [];
+  let   body    = '';
+
+  const enc = (s) => new TextEncoder().encode(s);
+
+  // Helper: convert base64 → Uint8Array
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+
+  // We'll build the PDF as an array of byte chunks
+  const chunks = [];
+  const push   = (s) => chunks.push(enc(s));
+  const pushB  = (b) => chunks.push(b);
+
+  push('%PDF-1.4\n');
+  push('%\xFF\xFF\xFF\xFF\n'); // binary marker
+
+  const objOffsets = {};
+  let   byteOffset = 0;
+
+  // Track offset helper
+  const currentOffset = () => chunks.reduce((a, c) => a + c.length, 0);
+
+  // Object IDs:
+  // 1 = catalog, 2 = pages, 3..N = page+image pairs
+  // page i → obj 3+(i-1)*2 (Page), obj 3+(i-1)*2+1 (Image XObject)
+
+  const numPages  = pages.length;
+  const pageIds   = pages.map((_, i) => 3 + i * 2);
+  const imageIds  = pages.map((_, i) => 4 + i * 2);
+  const nextObjId = 3 + numPages * 2;
+
+  // Object 1: Catalog
+  objOffsets[1] = currentOffset();
+  push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
+
+  // Object 2: Pages
+  const kidsStr = pageIds.map(id => `${id} 0 R`).join(' ');
+  objOffsets[2] = currentOffset();
+  push(`2 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${numPages} >>\nendobj\n`);
+
+  // For each page: Page object + Image XObject
+  for (let i = 0; i < numPages; i++) {
+    const pg      = pages[i];
+    const pageId  = pageIds[i];
+    const imgId   = imageIds[i];
+    const imgName = `Im${i}`;
+    const wPt     = Math.round(pg.widthPt);
+    const hPt     = Math.round(pg.heightPt);
+    const wPx     = Math.round(pg.width);
+    const hPx     = Math.round(pg.height);
+
+    // Page object
+    objOffsets[pageId] = currentOffset();
+    push(
+      `${pageId} 0 obj\n` +
+      `<< /Type /Page /Parent 2 0 R\n` +
+      `   /MediaBox [0 0 ${wPt} ${hPt}]\n` +
+      `   /Resources << /XObject << /${imgName} ${imgId} 0 R >> >>\n` +
+      `   /Contents ${imgId + numPages * 100} 0 R >>\n` +   // placeholder — fix below
+      `endobj\n`
+    );
+
+    // Content stream: draw image filling the page
+    const contentStr = `q ${wPt} 0 0 ${hPt} 0 0 cm /${imgName} Do Q\n`;
+    const contentBytes = enc(contentStr);
+
+    // Image XObject (JPEG)
+    const jpegBytes = b64ToBytes(pg.base64);
+    objOffsets[imgId] = currentOffset();
+    push(
+      `${imgId} 0 obj\n` +
+      `<< /Type /XObject /Subtype /Image\n` +
+      `   /Width ${wPx} /Height ${hPx}\n` +
+      `   /ColorSpace /DeviceRGB /BitsPerComponent 8\n` +
+      `   /Filter /DCTDecode /Length ${jpegBytes.length} >>\n` +
+      `stream\n`
+    );
+    pushB(jpegBytes);
+    push(`\nendstream\nendobj\n`);
+
+    // Content stream object — assign real IDs sequentially
+    const contentId = nextObjId + i;
+    objOffsets[contentId] = currentOffset();
+    push(
+      `${contentId} 0 obj\n` +
+      `<< /Length ${contentBytes.length} >>\n` +
+      `stream\n`
+    );
+    pushB(contentBytes);
+    push(`\nendstream\nendobj\n`);
+  }
+
+  // Fix Page objects — rebuild them with correct content IDs
+  // (simpler: just rebuild the whole thing cleanly from scratch)
+  // Actually the above has a bug (content obj ID in page dict) — let's do one clean pass instead:
+  return buildPdfClean(pages);
+}
+
+function buildPdfClean(pages) {
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+
+  const enc  = (s) => new TextEncoder().encode(s);
+  const chunks = [];
+  const push   = (s) => { chunks.push(typeof s === 'string' ? enc(s) : s); };
+
+  const totalBytes = () => chunks.reduce((a, c) => a + c.length, 0);
+
+  // Object layout per page i (0-based):
+  //   pageObj  = 3 + i*3
+  //   imgObj   = 4 + i*3
+  //   contObj  = 5 + i*3
+  const n = pages.length;
+  const pageObjId  = (i) => 3 + i * 3;
+  const imgObjId   = (i) => 4 + i * 3;
+  const contObjId  = (i) => 5 + i * 3;
+  const totalObjs  = 2 + n * 3;
+
+  const offsets = {};
+
+  push('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n');
+
+  // Obj 1: Catalog
+  offsets[1] = totalBytes();
+  push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
+
+  // Obj 2: Pages
+  const kids = Array.from({length: n}, (_, i) => `${pageObjId(i)} 0 R`).join(' ');
+  offsets[2] = totalBytes();
+  push(`2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${n} >>\nendobj\n`);
+
+  for (let i = 0; i < n; i++) {
+    const pg    = pages[i];
+    const wPt   = Math.round(pg.widthPt);
+    const hPt   = Math.round(pg.heightPt);
+    const wPx   = Math.round(pg.width);
+    const hPx   = Math.round(pg.height);
+    const imgN  = `Im${i}`;
+    const jpegB = b64ToBytes(pg.base64);
+    const contS = enc(`q ${wPt} 0 0 ${hPt} 0 0 cm /${imgN} Do Q\n`);
+
+    // Page object
+    offsets[pageObjId(i)] = totalBytes();
+    push(
+      `${pageObjId(i)} 0 obj\n` +
+      `<< /Type /Page /Parent 2 0 R\n` +
+      `   /MediaBox [0 0 ${wPt} ${hPt}]\n` +
+      `   /Resources << /XObject << /${imgN} ${imgObjId(i)} 0 R >> >>\n` +
+      `   /Contents ${contObjId(i)} 0 R >>\nendobj\n`
+    );
+
+    // Image XObject
+    offsets[imgObjId(i)] = totalBytes();
+    push(
+      `${imgObjId(i)} 0 obj\n` +
+      `<< /Type /XObject /Subtype /Image\n` +
+      `   /Width ${wPx} /Height ${hPx}\n` +
+      `   /ColorSpace /DeviceRGB /BitsPerComponent 8\n` +
+      `   /Filter /DCTDecode /Length ${jpegB.length} >>\nstream\n`
+    );
+    push(jpegB);
+    push(`\nendstream\nendobj\n`);
+
+    // Content stream
+    offsets[contObjId(i)] = totalBytes();
+    push(
+      `${contObjId(i)} 0 obj\n` +
+      `<< /Length ${contS.length} >>\nstream\n`
+    );
+    push(contS);
+    push(`\nendstream\nendobj\n`);
+  }
+
+  // Cross-reference table
+  const xrefOffset = totalBytes();
+  const xrefEntries = totalObjs + 1; // 0..totalObjs
+  let xref = `xref\n0 ${xrefEntries}\n0000000000 65535 f \n`;
+  for (let id = 1; id <= totalObjs; id++) {
+    const off = offsets[id] !== undefined ? offsets[id] : 0;
+    xref += String(off).padStart(10, '0') + ' 00000 n \n';
+  }
+  push(xref);
+  push(`trailer\n<< /Size ${xrefEntries} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+
+  // Merge all chunks into one Uint8Array
+  const total = chunks.reduce((a, c) => a + c.length, 0);
+  const result = new Uint8Array(total);
+  let pos = 0;
+  for (const c of chunks) { result.set(c, pos); pos += c.length; }
+  return result;
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────
 function downloadFile() {
   if (!pdfBytes || !detectedName) return;
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -346,13 +591,13 @@ function downloadFile() {
   URL.revokeObjectURL(url);
 }
 
-// ── PERSISTENT TOKEN ──────────────────────────────────────
+// ── TOKEN STORAGE ─────────────────────────────────────────
 function saveToken(token, expiresIn) {
-  const exp = Date.now() + (parseInt(expiresIn) - 60) * 1000;
+  const exp = Date.now() + (parseInt(expiresIn) - 120) * 1000; // 2-min buffer
   try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(TOKEN_EXP, String(exp)); } catch(e) {}
   accessToken = token;
 }
-function loadToken() {
+function loadSavedToken() {
   try {
     const t = localStorage.getItem(TOKEN_KEY);
     const e = parseInt(localStorage.getItem(TOKEN_EXP) || '0');
@@ -365,25 +610,34 @@ function clearToken() {
   accessToken = null;
 }
 
+// ── SIGN OUT ──────────────────────────────────────────────
 function signOut() {
   clearToken();
   document.getElementById('signed-in-bar').classList.remove('visible');
-  const btn = document.getElementById('auth-btn');
-  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Sign in with Google`;
-  btn.className = 'btn btn-google'; btn.onclick = startAuth;
+  resetAuthButton();
   clearStatus('status3');
+}
+
+function resetAuthButton() {
+  const btn = document.getElementById('auth-btn');
+  btn.className = 'btn btn-google';
+  btn.disabled  = false;
+  btn.onclick   = startAuth;
+  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Sign in with Google`;
 }
 
 function showUploadReady() {
   const btn = document.getElementById('auth-btn');
+  btn.className = 'btn btn-accent';
+  btn.disabled  = false;
+  btn.onclick   = uploadToDrive;
   btn.innerHTML = '☁️ Upload to Google Drive';
-  btn.className = 'btn btn-accent'; btn.onclick = uploadToDrive; btn.disabled = false;
 }
 
 function onSignedIn() {
   document.getElementById('signed-in-bar').classList.add('visible');
   unlock('step3');
-  document.getElementById('num3').classList.add('active');
+  markActive('num3', '3');
   if (pdfBytes) {
     showUploadReady();
     setStatus('status3', 'success', '✅ Ready! Tap "Upload to Google Drive".');
@@ -392,35 +646,83 @@ function onSignedIn() {
   }
 }
 
+// ── GOOGLE AUTH — POPUP (page never reloads) ──────────────
 function startAuth() {
-  const hash = new URLSearchParams(window.location.hash.slice(1));
-  if (hash.get('access_token')) {
-    saveToken(hash.get('access_token'), hash.get('expires_in') || '3600');
-    history.replaceState(null, '', window.location.pathname);
-    onSignedIn(); return;
-  }
+  setStatus('status3', 'info', '⏳ Opening Google sign-in…');
+
   const redirectUri = window.location.origin + window.location.pathname;
   const params = new URLSearchParams({
-    client_id: CLIENT_ID, redirect_uri: redirectUri,
-    response_type: 'token', scope: SCOPES, prompt: 'consent'
+    client_id:     CLIENT_ID,
+    redirect_uri:  redirectUri,
+    response_type: 'token',
+    scope:         SCOPES,
+    prompt:        'select_account',
   });
-  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+
+  // Open as popup — this way our main page never navigates away
+  const popup = window.open(authUrl, 'google_auth',
+    'width=500,height=640,left=' + ((screen.width - 500) / 2) +
+    ',top=' + ((screen.height - 640) / 2) +
+    ',toolbar=no,menubar=no,scrollbars=yes'
+  );
+
+  if (!popup) {
+    // Popup blocked — fall back to redirect
+    setStatus('status3', 'warning', '⚠️ Popup was blocked. Redirecting instead…');
+    setTimeout(() => { window.location.href = authUrl; }, 1500);
+    return;
+  }
+
+  // Poll the popup URL for the token (same-origin after redirect)
+  const poll = setInterval(() => {
+    try {
+      if (popup.closed) {
+        clearInterval(poll);
+        if (!accessToken) setStatus('status3', 'warning', '⚠️ Sign-in was cancelled.');
+        return;
+      }
+      const hash = new URLSearchParams(popup.location.hash.slice(1));
+      const token = hash.get('access_token');
+      if (token) {
+        clearInterval(poll);
+        popup.close();
+        saveToken(token, hash.get('expires_in') || '3600');
+        onSignedIn();
+      }
+    } catch(e) {
+      // Cross-origin during redirect — ignore and keep polling
+    }
+  }, 300);
 }
 
+// ── ON PAGE LOAD — check for saved token ─────────────────
 window.addEventListener('load', () => {
+  // Case 1: Redirected back from Google (fallback for popup-blocked mobile)
   const hash = new URLSearchParams(window.location.hash.slice(1));
   if (hash.get('access_token')) {
     saveToken(hash.get('access_token'), hash.get('expires_in') || '3600');
     history.replaceState(null, '', window.location.pathname);
-    onSignedIn(); return;
+    onSignedIn();
+    return;
   }
-  const saved = loadToken();
-  if (saved) { accessToken = saved; onSignedIn(); }
+
+  // Case 2: Valid token still in localStorage → auto sign-in, no button press needed
+  const saved = loadSavedToken();
+  if (saved) {
+    accessToken = saved;
+    onSignedIn();
+  }
 });
 
+// ── UPLOAD TO DRIVE ───────────────────────────────────────
 async function uploadToDrive() {
-  if (!pdfBytes || !detectedName) { setStatus('status3','warning','⚠️ Upload a PDF first.'); return; }
-  if (!accessToken) { setStatus('status3','warning','⚠️ Sign in with Google first.'); return; }
+  if (!pdfBytes || !detectedName) {
+    setStatus('status3', 'warning', '⚠️ Upload and process a PDF first.'); return;
+  }
+  if (!accessToken) {
+    setStatus('status3', 'warning', '⚠️ Sign in with Google first.'); return;
+  }
 
   const pf = document.getElementById('prog-fill');
   const pl = document.getElementById('prog-label');
@@ -436,7 +738,9 @@ async function uploadToDrive() {
   try {
     pf.style.width = '60%'; pl.textContent = `Uploading ${detectedName}…`;
     const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: form
     });
     pf.style.width = '100%';
 
@@ -445,34 +749,32 @@ async function uploadToDrive() {
       setStatus('status3', 'success', `✅ <strong>${detectedName}</strong> saved to Google Drive — no password!`);
       markDone('num3');
 
-      // Reset for next upload (keep signed in)
+      // Reset for next upload — keep signed in
       pdfBytes = null; detectedName = null;
       setTimeout(() => {
-        ['num1','num2'].forEach(id => {
-          const el = document.getElementById(id);
-          el.classList.remove('done'); el.classList.add('active');
-          el.textContent = id === 'num1' ? '1' : '2';
-        });
-        const n3 = document.getElementById('num3');
-        n3.classList.remove('done'); n3.classList.add('active'); n3.textContent = '3';
         document.getElementById('drop-label').textContent = 'Drop PDF here, or tap to browse';
         document.getElementById('filein').value = '';
         document.getElementById('rv-period').textContent = '—';
         document.getElementById('rv-name').textContent = 'Payslip_YYMM_Warut.pdf';
         document.getElementById('dl-btn').textContent = '⬇️ Download renamed PDF to device';
         document.getElementById('dl-btn').disabled = true;
-        document.getElementById('step2').classList.add('locked');
+        lock('step2');
+        markActive('num1', '1'); markActive('num2', '2'); markActive('num3', '3');
         clearStatus('status1'); clearStatus('status2');
-        pw.style.display = 'none';
+        pw.style.display = 'none'; pf.style.width = '0%';
         showUploadReady();
         setStatus('status3', 'success', '✅ Done! Ready for the next payslip.');
       }, 2500);
 
     } else {
       pw.style.display = 'none';
-      const err = await res.json();
-      if (res.status === 401) { clearToken(); signOut(); setStatus('status3','error','❌ Session expired. Please sign in again.'); }
-      else setStatus('status3', 'error', '❌ Upload failed: ' + (err.error?.message || 'Error ' + res.status));
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        clearToken(); signOut();
+        setStatus('status3', 'error', '❌ Session expired. Please sign in again.');
+      } else {
+        setStatus('status3', 'error', '❌ Upload failed: ' + (err?.error?.message || 'Error ' + res.status));
+      }
     }
   } catch(e) {
     pw.style.display = 'none';
