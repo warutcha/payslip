@@ -1,3 +1,5 @@
+html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,22 +49,23 @@
   .header h1 span { opacity: 0.65; }
   .header p { color: rgba(255,255,255,0.68); font-size: 14px; margin-top: 10px; line-height: 1.6; }
 
-  /* SIGNED-IN BAR */
-  .signed-in-bar { display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.22); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 12px; color: rgba(255,255,255,0.9); font-size: 13px; }
-  .signed-in-bar.visible { display: flex; }
-  .dot-green { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(74,222,128,0.28); }
-  .signout-btn { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.55); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
-  .signout-btn:hover { color: #fff; }
-
   /* STEPS */
   .step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; box-shadow: var(--shadow); transition: border-color 0.2s, opacity 0.2s; }
-  .step.locked { opacity: 0.5; pointer-events: none; }
+  .step.locked { opacity: 0.45; pointer-events: none; }
   .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .step-num { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); flex-shrink: 0; transition: all 0.2s; }
   .step-num.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   .step-num.done { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; }
   .step-title { font-size: 14px; font-weight: 700; color: var(--text); }
   .step-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* GOOGLE SIGNED-IN STATE inside step 1 */
+  .google-signed-in { display: none; background: var(--green-dim); border: 1px solid rgba(10,122,75,0.2); border-radius: var(--radius-sm); padding: 12px 14px; align-items: center; gap: 10px; }
+  .google-signed-in.visible { display: flex; }
+  .dot-green { width: 9px; height: 9px; border-radius: 50%; background: #16a34a; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
+  .signed-email { font-size: 13px; color: var(--green); font-weight: 500; flex: 1; }
+  .signout-link { font-size: 12px; color: var(--green); opacity: 0.7; cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
+  .signout-link:hover { opacity: 1; }
 
   /* DROP ZONE */
   .dropzone { border: 2px dashed var(--border2); border-radius: var(--radius-sm); padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--accent-dim2); }
@@ -119,32 +122,52 @@
   /* FOOTER */
   .footer { text-align: center; margin-top: 2.5rem; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
 
-  /* Hidden canvas for PDF rendering */
   #pdf-canvas { display: none; }
-
   @media (max-width: 480px) { .container { padding: 1.5rem 1rem 3rem; } }
 </style>
 </head>
 <body>
 <canvas id="pdf-canvas"></canvas>
-
 <div class="container">
+
   <div class="header">
     <div class="header-tag">✦ HMS Payslip Tool</div>
     <h1>Payslip<br><span>Renamer</span></h1>
-    <p>Upload your salary PDF → auto-detect month & year → rename → save to Google Drive.</p>
+    <p>Sign in once → upload your payslip → auto-saves to Google Drive.</p>
   </div>
 
-  <div class="signed-in-bar" id="signed-in-bar">
-    <span class="dot-green"></span>
-    <span id="signed-in-email">Signed in to Google</span>
-    <button class="signout-btn" onclick="signOut()">Sign out</button>
-  </div>
-
-  <!-- STEP 1 -->
+  <!-- STEP 1: SIGN IN -->
   <div class="step" id="step1">
     <div class="step-header">
       <div class="step-num active" id="num1">1</div>
+      <div>
+        <div class="step-title">Sign in with Google</div>
+        <div class="step-sub">Connect to your Google Drive once</div>
+      </div>
+    </div>
+
+    <!-- Not signed in -->
+    <div id="signin-panel">
+      <button class="btn btn-google" id="auth-btn" onclick="startAuth()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+        Sign in with Google
+      </button>
+      <div class="info-box" style="margin-top:10px">🔒 Your sign-in token is saved in this browser. Next time you open this page, you'll already be signed in automatically.</div>
+      <div id="status-auth"></div>
+    </div>
+
+    <!-- Signed in -->
+    <div class="google-signed-in" id="signed-in-panel">
+      <span class="dot-green"></span>
+      <span class="signed-email" id="signed-in-label">Connected to Google Drive</span>
+      <button class="signout-link" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: UPLOAD -->
+  <div class="step locked" id="step2">
+    <div class="step-header">
+      <div class="step-num" id="num2">2</div>
       <div>
         <div class="step-title">Upload Payslip PDF</div>
         <div class="step-sub">Password-protected files supported</div>
@@ -153,62 +176,46 @@
     <div class="dropzone" id="dropzone" onclick="document.getElementById('filein').click()">
       <div class="dropzone-icon">📄</div>
       <p id="drop-label">Drop PDF here, or tap to browse</p>
-      <small>Your file never leaves your device until you upload to Drive</small>
+      <small>File stays on your device — only the renamed copy goes to Drive</small>
     </div>
     <input type="file" id="filein" accept=".pdf">
     <div class="field-row">
       <span class="field-label">🔒 Password</span>
       <input type="password" class="field-input" id="pw-input" value="21819" placeholder="PDF password">
     </div>
-    <div id="status1"></div>
+    <div id="status2"></div>
   </div>
 
-  <!-- STEP 2 -->
-  <div class="step locked" id="step2">
+  <!-- STEP 3: RESULT -->
+  <div class="step locked" id="step3">
     <div class="step-header">
-      <div class="step-num" id="num2">2</div>
+      <div class="step-num" id="num3">3</div>
       <div>
-        <div class="step-title">Detected Pay Period</div>
-        <div class="step-sub">Auto-read from PDF content</div>
+        <div class="step-title">Saving to Google Drive</div>
+        <div class="step-sub">Renamed & unlocked file uploaded automatically</div>
       </div>
     </div>
-    <div class="result-grid">
+    <div class="result-grid" id="result-grid" style="display:none">
       <div class="result-item">
         <span class="result-key">Pay period</span>
         <span class="result-val" id="rv-period">—</span>
       </div>
       <div class="result-item">
-        <span class="result-key">New filename</span>
+        <span class="result-key">Saved as</span>
         <span class="pill" id="rv-name">Payslip_YYMM_Warut.pdf</span>
       </div>
     </div>
-    <div id="status2"></div>
-  </div>
-
-  <!-- STEP 3 -->
-  <div class="step locked" id="step3">
-    <div class="step-header">
-      <div class="step-num" id="num3">3</div>
-      <div>
-        <div class="step-title">Save to Google Drive</div>
-        <div class="step-sub">Uploads unlocked & renamed file to your folder</div>
-      </div>
-    </div>
-    <button class="btn btn-google" id="auth-btn" onclick="startAuth()">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-      Sign in with Google
-    </button>
     <div id="status3"></div>
     <div id="prog-wrap" style="display:none" class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
-      <div class="progress-label" id="prog-label">Uploading…</div>
+      <div class="progress-label" id="prog-label">Processing…</div>
     </div>
-    <div class="or-divider"><span>or</span></div>
-    <button class="btn" id="dl-btn" onclick="downloadFile()" disabled>⬇️ Download renamed PDF to device</button>
-    <div class="info-box">🛡️ Only creates new files in your folder. Never reads, modifies, or deletes existing files. The saved PDF will have <strong>no password</strong>.</div>
+    <div class="or-divider" id="dl-divider" style="display:none"><span>or</span></div>
+    <button class="btn" id="dl-btn" onclick="downloadFile()" style="display:none">⬇️ Download renamed PDF to device</button>
+    <div class="info-box" style="margin-top:10px">🛡️ Only creates new files. Never reads, modifies, or deletes existing files. Saved PDF has <strong>no password</strong>.</div>
   </div>
 
-  <div class="footer">Built for Warut · HMS Payslip Tool · v4.0</div>
+  <div class="footer">Built for Warut · HMS Payslip Tool · v5.0</div>
 </div>
 
 <script>
@@ -216,8 +223,8 @@
 const FOLDER_ID = '10CUfI2j_8AjW1oY-RFoSWa0T2duG749p';
 const CLIENT_ID = '544858630647-ndaad2g7ft8vnluipqfa8f5qjhbafp7o.apps.googleusercontent.com';
 const SCOPES    = 'https://www.googleapis.com/auth/drive.file';
-const TOKEN_KEY = 'payslip_token';
-const TOKEN_EXP = 'payslip_token_exp';
+const TOKEN_KEY = 'payslip_token_v5';
+const TOKEN_EXP = 'payslip_token_exp_v5';
 // ─────────────────────────────────────────────────────────
 
 const THAI_MONTHS = {
@@ -248,75 +255,199 @@ function setStatus(id, type, msg) {
 }
 function clearStatus(id) { document.getElementById(id).innerHTML = ''; }
 
+// ── TOKEN PERSISTENCE ─────────────────────────────────────
+function saveToken(token, expiresIn) {
+  const exp = Date.now() + (parseInt(expiresIn) - 120) * 1000;
+  try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(TOKEN_EXP, String(exp)); } catch(e) {}
+  accessToken = token;
+}
+function loadSavedToken() {
+  try {
+    const t = localStorage.getItem(TOKEN_KEY);
+    const e = parseInt(localStorage.getItem(TOKEN_EXP) || '0');
+    if (t && Date.now() < e) return t;
+  } catch(e) {}
+  return null;
+}
+function clearToken() {
+  try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXP); } catch(e) {}
+  accessToken = null;
+}
+
+// ── SIGN IN / OUT ─────────────────────────────────────────
+function onSignedIn() {
+  document.getElementById('signin-panel').style.display  = 'none';
+  document.getElementById('signed-in-panel').classList.add('visible');
+  markDone('num1');
+  unlock('step2');
+  markActive('num2', '2');
+}
+
+function signOut() {
+  clearToken();
+  document.getElementById('signin-panel').style.display  = '';
+  document.getElementById('signed-in-panel').classList.remove('visible');
+  markActive('num1', '1');
+  lock('step2');
+  lock('step3');
+  clearStatus('status-auth');
+}
+
+function startAuth() {
+  setStatus('status-auth', 'info', '⏳ Opening Google sign-in…');
+
+  const redirectUri = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams({
+    client_id:     CLIENT_ID,
+    redirect_uri:  redirectUri,
+    response_type: 'token',
+    scope:         SCOPES,
+    prompt:        'select_account',
+  });
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+
+  // Try popup first (keeps page state intact)
+  const popup = window.open(authUrl, 'google_auth',
+    'width=500,height=640,left=' + Math.round((screen.width  - 500) / 2) +
+    ',top='  + Math.round((screen.height - 640) / 2) +
+    ',toolbar=no,menubar=no,scrollbars=yes'
+  );
+
+  if (!popup || popup.closed) {
+    // Popup blocked — redirect whole page
+    window.location.href = authUrl;
+    return;
+  }
+
+  // Poll popup for token
+  const poll = setInterval(() => {
+    try {
+      if (popup.closed) {
+        clearInterval(poll);
+        if (!accessToken) setStatus('status-auth', 'warning', '⚠️ Sign-in cancelled.');
+        return;
+      }
+      const hash  = new URLSearchParams(popup.location.hash.slice(1));
+      const token = hash.get('access_token');
+      if (token) {
+        clearInterval(poll);
+        popup.close();
+        saveToken(token, hash.get('expires_in') || '3600');
+        clearStatus('status-auth');
+        onSignedIn();
+      }
+    } catch(e) { /* cross-origin during redirect — keep polling */ }
+  }, 300);
+}
+
+// ── ON LOAD: restore token or handle redirect ─────────────
+window.addEventListener('load', () => {
+  // Came back from Google redirect (popup-blocked fallback)
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if (hash.get('access_token')) {
+    saveToken(hash.get('access_token'), hash.get('expires_in') || '3600');
+    history.replaceState(null, '', window.location.pathname);
+    onSignedIn();
+    return;
+  }
+  // Restore from localStorage
+  const saved = loadSavedToken();
+  if (saved) { accessToken = saved; onSignedIn(); }
+});
+
 // ── DRAG & DROP ───────────────────────────────────────────
 const dz = document.getElementById('dropzone');
 dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
-document.getElementById('filein').addEventListener('change', e => { handleFile(e.target.files[0]); });
+document.getElementById('filein').addEventListener('change', e => handleFile(e.target.files[0]));
 
-// ── MAIN FILE HANDLER ─────────────────────────────────────
+// ── FILE HANDLER ──────────────────────────────────────────
 async function handleFile(file) {
   if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
-    setStatus('status1', 'error', '❌ Please select a PDF file.'); return;
+    setStatus('status2', 'error', '❌ Please select a PDF file.'); return;
   }
+
   document.getElementById('drop-label').textContent = '📄 ' + file.name;
-  setStatus('status1', 'info', '⏳ Reading PDF…');
-  unlock('step2');
+  setStatus('status2', 'info', '⏳ Reading PDF…');
+
+  // Unlock step 3 area and show progress immediately
+  unlock('step3');
+  markActive('num3', '3');
+  document.getElementById('result-grid').style.display   = 'none';
+  document.getElementById('dl-divider').style.display    = 'none';
+  document.getElementById('dl-btn').style.display        = 'none';
+  clearStatus('status3');
 
   const rawBytes = new Uint8Array(await file.arrayBuffer());
   const pw = document.getElementById('pw-input').value.trim();
 
   try {
-    // STEP A: Use pdf.js to read text (handles encryption natively)
-    const loadTask = pdfjsLib.getDocument({
+    // Read text with pdf.js (handles encrypted PDFs natively)
+    const pdfDoc = await pdfjsLib.getDocument({
       data: rawBytes.slice(),
       password: pw,
       cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
       cMapPacked: true,
-    });
-    const pdfDoc = await loadTask.promise;
+    }).promise;
 
     let text = '';
     for (let i = 1; i <= pdfDoc.numPages; i++) {
-      const page = await pdfDoc.getPage(i);
-      const tc   = await page.getTextContent();
+      const tc = await (await pdfDoc.getPage(i)).getTextContent();
       text += tc.items.map(t => t.str).join(' ') + '\n';
     }
 
-    // STEP B: Detect pay period from Thai text
+    // Detect pay period
     const parsed = parsePayslip(text);
     if (!parsed) {
-      setStatus('status1', 'error', '❌ Could not detect pay period. Check password or file format.'); return;
+      setStatus('status2', 'error', '❌ Could not detect pay period. Check password or file format.'); return;
     }
 
     const { month, year, monthNum } = parsed;
     const yy = String(year).slice(-2);
     detectedName = `Payslip_${yy}${monthNum}_Warut.pdf`;
 
+    markDone('num2');
+    setStatus('status2', 'success', `✅ Detected: <strong>${month} ${year}</strong>`);
+
+    // Show result info
     document.getElementById('rv-period').textContent = `${month} ${year}`;
     document.getElementById('rv-name').textContent   = detectedName;
-    document.getElementById('dl-btn').textContent    = `⬇️ Download ${detectedName}`;
+    document.getElementById('result-grid').style.display = 'grid';
 
-    markDone('num1'); markDone('num2');
-    setStatus('status2', 'success', `✅ Detected: <strong>${month} ${year}</strong> → <strong>${detectedName}</strong>`);
+    // Remove password — render pages to canvas → build clean PDF
+    setStatus('status3', 'info', '⏳ Removing password & preparing file…');
+    const pw2 = document.getElementById('prog-wrap');
+    const pf  = document.getElementById('prog-fill');
+    const pl  = document.getElementById('prog-label');
+    pw2.style.display = 'block'; pf.style.width = '15%'; pl.textContent = 'Rendering pages…';
 
-    // STEP C: Re-render each page onto canvas → build new clean PDF (no password)
-    setStatus('status1', 'info', '⏳ Removing password protection (this may take a moment)…');
-    pdfBytes = await renderPdfToCleanPdf(pdfDoc);
-    setStatus('status1', 'success', '✅ PDF ready — password removed successfully.');
+    pdfBytes = await renderToCleanPdf(pdfDoc, (progress) => {
+      pf.style.width = (15 + progress * 50) + '%';
+      pl.textContent = `Rendering page ${Math.ceil(progress * pdfDoc.numPages)} of ${pdfDoc.numPages}…`;
+    });
 
-    unlock('step3');
-    markActive('num3', '3');
-    document.getElementById('dl-btn').disabled = false;
-    if (accessToken) showUploadReady();
+    // Make download available
+    document.getElementById('dl-divider').style.display = '';
+    document.getElementById('dl-btn').style.display     = '';
+    document.getElementById('dl-btn').textContent       = `⬇️ Download ${detectedName}`;
+
+    // Auto-upload if signed in
+    if (accessToken) {
+      pf.style.width = '65%'; pl.textContent = `Uploading ${detectedName}…`;
+      await uploadToDrive(pf, pl, pw2);
+    } else {
+      pw2.style.display = 'none';
+      setStatus('status3', 'warning', '⚠️ Not signed in to Google. Please sign in (Step 1) then upload again.');
+    }
 
   } catch (err) {
     console.error(err);
-    if (err.message && err.message.toLowerCase().includes('password')) {
-      setStatus('status1', 'error', '❌ Wrong password. Please check and try again.');
+    const msg = (err.message || '').toLowerCase();
+    if (msg.includes('password') || msg.includes('encrypted')) {
+      setStatus('status2', 'error', '❌ Wrong password. Please check and try again.');
     } else {
-      setStatus('status1', 'error', '❌ Error reading PDF: ' + err.message);
+      setStatus('status2', 'error', '❌ Error: ' + err.message);
     }
   }
 }
@@ -339,246 +470,93 @@ function parsePayslip(text) {
   return null;
 }
 
-// ── PDF DECRYPTION: render pages to canvas → new clean PDF ─
-// This approach ALWAYS works regardless of encryption type,
-// because pdf.js renders the visual content, then we encode
-// each page as a JPEG into a fresh unencrypted PDF.
-async function renderPdfToCleanPdf(pdfDoc) {
-  const canvas  = document.getElementById('pdf-canvas');
-  const ctx     = canvas.getContext('2d');
-  const scale   = 2.0; // high quality
-  const jpegParts = [];
+// ── RENDER PDF PAGES → CLEAN PDF ─────────────────────────
+async function renderToCleanPdf(pdfDoc, onProgress) {
+  const canvas = document.getElementById('pdf-canvas');
+  const ctx    = canvas.getContext('2d');
+  const scale  = 2.0;
+  const pages  = [];
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     const page     = await pdfDoc.getPage(i);
     const viewport = page.getViewport({ scale });
     canvas.width   = viewport.width;
     canvas.height  = viewport.height;
-
-    // White background
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle  = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     await page.render({ canvasContext: ctx, viewport }).promise;
-
-    const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    const base64      = jpegDataUrl.split(',')[1];
-    jpegParts.push({
-      base64,
-      width:  viewport.width,
-      height: viewport.height,
-      widthPt:  viewport.width  / scale,
-      heightPt: viewport.height / scale,
-    });
+    const b64 = canvas.toDataURL('image/jpeg', 0.93).split(',')[1];
+    pages.push({ b64, wPx: viewport.width, hPx: viewport.height, wPt: viewport.width / scale, hPt: viewport.height / scale });
+    if (onProgress) onProgress(i / pdfDoc.numPages);
   }
 
-  // Build a minimal valid PDF containing the JPEG images
-  return buildPdfFromJpegs(jpegParts);
+  return buildCleanPdf(pages);
 }
 
-// ── BUILD CLEAN PDF FROM JPEG IMAGES ─────────────────────
-function buildPdfFromJpegs(pages) {
-  // Minimal PDF structure — one page per JPEG, no encryption
-  const objects = [];
-  const offsets = [];
-  let   body    = '';
-
+// ── BUILD MINIMAL CLEAN PDF ───────────────────────────────
+function buildCleanPdf(pages) {
   const enc = (s) => new TextEncoder().encode(s);
-
-  // Helper: convert base64 → Uint8Array
   function b64ToBytes(b64) {
-    const bin = atob(b64);
-    const arr = new Uint8Array(bin.length);
+    const bin = atob(b64); const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     return arr;
   }
 
-  // We'll build the PDF as an array of byte chunks
-  const chunks = [];
-  const push   = (s) => chunks.push(enc(s));
-  const pushB  = (b) => chunks.push(b);
-
-  push('%PDF-1.4\n');
-  push('%\xFF\xFF\xFF\xFF\n'); // binary marker
-
-  const objOffsets = {};
-  let   byteOffset = 0;
-
-  // Track offset helper
-  const currentOffset = () => chunks.reduce((a, c) => a + c.length, 0);
-
-  // Object IDs:
-  // 1 = catalog, 2 = pages, 3..N = page+image pairs
-  // page i → obj 3+(i-1)*2 (Page), obj 3+(i-1)*2+1 (Image XObject)
-
-  const numPages  = pages.length;
-  const pageIds   = pages.map((_, i) => 3 + i * 2);
-  const imageIds  = pages.map((_, i) => 4 + i * 2);
-  const nextObjId = 3 + numPages * 2;
-
-  // Object 1: Catalog
-  objOffsets[1] = currentOffset();
-  push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
-
-  // Object 2: Pages
-  const kidsStr = pageIds.map(id => `${id} 0 R`).join(' ');
-  objOffsets[2] = currentOffset();
-  push(`2 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${numPages} >>\nendobj\n`);
-
-  // For each page: Page object + Image XObject
-  for (let i = 0; i < numPages; i++) {
-    const pg      = pages[i];
-    const pageId  = pageIds[i];
-    const imgId   = imageIds[i];
-    const imgName = `Im${i}`;
-    const wPt     = Math.round(pg.widthPt);
-    const hPt     = Math.round(pg.heightPt);
-    const wPx     = Math.round(pg.width);
-    const hPx     = Math.round(pg.height);
-
-    // Page object
-    objOffsets[pageId] = currentOffset();
-    push(
-      `${pageId} 0 obj\n` +
-      `<< /Type /Page /Parent 2 0 R\n` +
-      `   /MediaBox [0 0 ${wPt} ${hPt}]\n` +
-      `   /Resources << /XObject << /${imgName} ${imgId} 0 R >> >>\n` +
-      `   /Contents ${imgId + numPages * 100} 0 R >>\n` +   // placeholder — fix below
-      `endobj\n`
-    );
-
-    // Content stream: draw image filling the page
-    const contentStr = `q ${wPt} 0 0 ${hPt} 0 0 cm /${imgName} Do Q\n`;
-    const contentBytes = enc(contentStr);
-
-    // Image XObject (JPEG)
-    const jpegBytes = b64ToBytes(pg.base64);
-    objOffsets[imgId] = currentOffset();
-    push(
-      `${imgId} 0 obj\n` +
-      `<< /Type /XObject /Subtype /Image\n` +
-      `   /Width ${wPx} /Height ${hPx}\n` +
-      `   /ColorSpace /DeviceRGB /BitsPerComponent 8\n` +
-      `   /Filter /DCTDecode /Length ${jpegBytes.length} >>\n` +
-      `stream\n`
-    );
-    pushB(jpegBytes);
-    push(`\nendstream\nendobj\n`);
-
-    // Content stream object — assign real IDs sequentially
-    const contentId = nextObjId + i;
-    objOffsets[contentId] = currentOffset();
-    push(
-      `${contentId} 0 obj\n` +
-      `<< /Length ${contentBytes.length} >>\n` +
-      `stream\n`
-    );
-    pushB(contentBytes);
-    push(`\nendstream\nendobj\n`);
-  }
-
-  // Fix Page objects — rebuild them with correct content IDs
-  // (simpler: just rebuild the whole thing cleanly from scratch)
-  // Actually the above has a bug (content obj ID in page dict) — let's do one clean pass instead:
-  return buildPdfClean(pages);
-}
-
-function buildPdfClean(pages) {
-  function b64ToBytes(b64) {
-    const bin = atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    return arr;
-  }
-
-  const enc  = (s) => new TextEncoder().encode(s);
-  const chunks = [];
-  const push   = (s) => { chunks.push(typeof s === 'string' ? enc(s) : s); };
-
-  const totalBytes = () => chunks.reduce((a, c) => a + c.length, 0);
-
-  // Object layout per page i (0-based):
-  //   pageObj  = 3 + i*3
-  //   imgObj   = 4 + i*3
-  //   contObj  = 5 + i*3
-  const n = pages.length;
-  const pageObjId  = (i) => 3 + i * 3;
-  const imgObjId   = (i) => 4 + i * 3;
-  const contObjId  = (i) => 5 + i * 3;
-  const totalObjs  = 2 + n * 3;
-
+  const chunks  = [];
+  const push    = (s) => chunks.push(typeof s === 'string' ? enc(s) : s);
+  const byteLen = () => chunks.reduce((a, c) => a + c.length, 0);
+  const n       = pages.length;
   const offsets = {};
+
+  // IDs: 1=catalog, 2=pages, per page i: pageObj=3+i*3, imgObj=4+i*3, contObj=5+i*3
+  const pageId = (i) => 3 + i * 3;
+  const imgId  = (i) => 4 + i * 3;
+  const cntId  = (i) => 5 + i * 3;
+  const totalO = 2 + n * 3;
 
   push('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n');
 
-  // Obj 1: Catalog
-  offsets[1] = totalBytes();
+  offsets[1] = byteLen();
   push(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`);
 
-  // Obj 2: Pages
-  const kids = Array.from({length: n}, (_, i) => `${pageObjId(i)} 0 R`).join(' ');
-  offsets[2] = totalBytes();
+  const kids = Array.from({length: n}, (_, i) => `${pageId(i)} 0 R`).join(' ');
+  offsets[2] = byteLen();
   push(`2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${n} >>\nendobj\n`);
 
   for (let i = 0; i < n; i++) {
-    const pg    = pages[i];
-    const wPt   = Math.round(pg.widthPt);
-    const hPt   = Math.round(pg.heightPt);
-    const wPx   = Math.round(pg.width);
-    const hPx   = Math.round(pg.height);
-    const imgN  = `Im${i}`;
-    const jpegB = b64ToBytes(pg.base64);
-    const contS = enc(`q ${wPt} 0 0 ${hPt} 0 0 cm /${imgN} Do Q\n`);
+    const pg   = pages[i];
+    const wPt  = Math.round(pg.wPt), hPt = Math.round(pg.hPt);
+    const wPx  = Math.round(pg.wPx), hPx = Math.round(pg.hPx);
+    const jpeg = b64ToBytes(pg.b64);
+    const cont = enc(`q ${wPt} 0 0 ${hPt} 0 0 cm /Im${i} Do Q\n`);
 
-    // Page object
-    offsets[pageObjId(i)] = totalBytes();
-    push(
-      `${pageObjId(i)} 0 obj\n` +
-      `<< /Type /Page /Parent 2 0 R\n` +
-      `   /MediaBox [0 0 ${wPt} ${hPt}]\n` +
-      `   /Resources << /XObject << /${imgN} ${imgObjId(i)} 0 R >> >>\n` +
-      `   /Contents ${contObjId(i)} 0 R >>\nendobj\n`
-    );
+    offsets[pageId(i)] = byteLen();
+    push(`${pageId(i)} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${wPt} ${hPt}] /Resources << /XObject << /Im${i} ${imgId(i)} 0 R >> >> /Contents ${cntId(i)} 0 R >>\nendobj\n`);
 
-    // Image XObject
-    offsets[imgObjId(i)] = totalBytes();
-    push(
-      `${imgObjId(i)} 0 obj\n` +
-      `<< /Type /XObject /Subtype /Image\n` +
-      `   /Width ${wPx} /Height ${hPx}\n` +
-      `   /ColorSpace /DeviceRGB /BitsPerComponent 8\n` +
-      `   /Filter /DCTDecode /Length ${jpegB.length} >>\nstream\n`
-    );
-    push(jpegB);
+    offsets[imgId(i)] = byteLen();
+    push(`${imgId(i)} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${wPx} /Height ${hPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+    push(jpeg);
     push(`\nendstream\nendobj\n`);
 
-    // Content stream
-    offsets[contObjId(i)] = totalBytes();
-    push(
-      `${contObjId(i)} 0 obj\n` +
-      `<< /Length ${contS.length} >>\nstream\n`
-    );
-    push(contS);
+    offsets[cntId(i)] = byteLen();
+    push(`${cntId(i)} 0 obj\n<< /Length ${cont.length} >>\nstream\n`);
+    push(cont);
     push(`\nendstream\nendobj\n`);
   }
 
-  // Cross-reference table
-  const xrefOffset = totalBytes();
-  const xrefEntries = totalObjs + 1; // 0..totalObjs
-  let xref = `xref\n0 ${xrefEntries}\n0000000000 65535 f \n`;
-  for (let id = 1; id <= totalObjs; id++) {
-    const off = offsets[id] !== undefined ? offsets[id] : 0;
-    xref += String(off).padStart(10, '0') + ' 00000 n \n';
+  const xrefOff = byteLen();
+  let xref = `xref\n0 ${totalO + 1}\n0000000000 65535 f \n`;
+  for (let id = 1; id <= totalO; id++) {
+    xref += String(offsets[id] || 0).padStart(10, '0') + ' 00000 n \n';
   }
   push(xref);
-  push(`trailer\n<< /Size ${xrefEntries} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  push(`trailer\n<< /Size ${totalO + 1} /Root 1 0 R >>\nstartxref\n${xrefOff}\n%%EOF\n`);
 
-  // Merge all chunks into one Uint8Array
   const total = chunks.reduce((a, c) => a + c.length, 0);
-  const result = new Uint8Array(total);
+  const out   = new Uint8Array(total);
   let pos = 0;
-  for (const c of chunks) { result.set(c, pos); pos += c.length; }
-  return result;
+  for (const c of chunks) { out.set(c, pos); pos += c.length; }
+  return out;
 }
 
 // ── DOWNLOAD ──────────────────────────────────────────────
@@ -591,195 +569,63 @@ function downloadFile() {
   URL.revokeObjectURL(url);
 }
 
-// ── TOKEN STORAGE ─────────────────────────────────────────
-function saveToken(token, expiresIn) {
-  const exp = Date.now() + (parseInt(expiresIn) - 120) * 1000; // 2-min buffer
-  try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(TOKEN_EXP, String(exp)); } catch(e) {}
-  accessToken = token;
-}
-function loadSavedToken() {
-  try {
-    const t = localStorage.getItem(TOKEN_KEY);
-    const e = parseInt(localStorage.getItem(TOKEN_EXP) || '0');
-    if (t && Date.now() < e) return t;
-  } catch(e) {}
-  return null;
-}
-function clearToken() {
-  try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXP); } catch(e) {}
-  accessToken = null;
-}
-
-// ── SIGN OUT ──────────────────────────────────────────────
-function signOut() {
-  clearToken();
-  document.getElementById('signed-in-bar').classList.remove('visible');
-  resetAuthButton();
-  clearStatus('status3');
-}
-
-function resetAuthButton() {
-  const btn = document.getElementById('auth-btn');
-  btn.className = 'btn btn-google';
-  btn.disabled  = false;
-  btn.onclick   = startAuth;
-  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg> Sign in with Google`;
-}
-
-function showUploadReady() {
-  const btn = document.getElementById('auth-btn');
-  btn.className = 'btn btn-accent';
-  btn.disabled  = false;
-  btn.onclick   = uploadToDrive;
-  btn.innerHTML = '☁️ Upload to Google Drive';
-}
-
-function onSignedIn() {
-  document.getElementById('signed-in-bar').classList.add('visible');
-  unlock('step3');
-  markActive('num3', '3');
-  if (pdfBytes) {
-    showUploadReady();
-    setStatus('status3', 'success', '✅ Ready! Tap "Upload to Google Drive".');
-  } else {
-    setStatus('status3', 'info', '✅ Signed in! Upload a PDF above to continue.');
-  }
-}
-
-// ── GOOGLE AUTH — POPUP (page never reloads) ──────────────
-function startAuth() {
-  setStatus('status3', 'info', '⏳ Opening Google sign-in…');
-
-  const redirectUri = window.location.origin + window.location.pathname;
-  const params = new URLSearchParams({
-    client_id:     CLIENT_ID,
-    redirect_uri:  redirectUri,
-    response_type: 'token',
-    scope:         SCOPES,
-    prompt:        'select_account',
-  });
-  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
-
-  // Open as popup — this way our main page never navigates away
-  const popup = window.open(authUrl, 'google_auth',
-    'width=500,height=640,left=' + ((screen.width - 500) / 2) +
-    ',top=' + ((screen.height - 640) / 2) +
-    ',toolbar=no,menubar=no,scrollbars=yes'
-  );
-
-  if (!popup) {
-    // Popup blocked — fall back to redirect
-    setStatus('status3', 'warning', '⚠️ Popup was blocked. Redirecting instead…');
-    setTimeout(() => { window.location.href = authUrl; }, 1500);
-    return;
-  }
-
-  // Poll the popup URL for the token (same-origin after redirect)
-  const poll = setInterval(() => {
-    try {
-      if (popup.closed) {
-        clearInterval(poll);
-        if (!accessToken) setStatus('status3', 'warning', '⚠️ Sign-in was cancelled.');
-        return;
-      }
-      const hash = new URLSearchParams(popup.location.hash.slice(1));
-      const token = hash.get('access_token');
-      if (token) {
-        clearInterval(poll);
-        popup.close();
-        saveToken(token, hash.get('expires_in') || '3600');
-        onSignedIn();
-      }
-    } catch(e) {
-      // Cross-origin during redirect — ignore and keep polling
-    }
-  }, 300);
-}
-
-// ── ON PAGE LOAD — check for saved token ─────────────────
-window.addEventListener('load', () => {
-  // Case 1: Redirected back from Google (fallback for popup-blocked mobile)
-  const hash = new URLSearchParams(window.location.hash.slice(1));
-  if (hash.get('access_token')) {
-    saveToken(hash.get('access_token'), hash.get('expires_in') || '3600');
-    history.replaceState(null, '', window.location.pathname);
-    onSignedIn();
-    return;
-  }
-
-  // Case 2: Valid token still in localStorage → auto sign-in, no button press needed
-  const saved = loadSavedToken();
-  if (saved) {
-    accessToken = saved;
-    onSignedIn();
-  }
-});
-
 // ── UPLOAD TO DRIVE ───────────────────────────────────────
-async function uploadToDrive() {
-  if (!pdfBytes || !detectedName) {
-    setStatus('status3', 'warning', '⚠️ Upload and process a PDF first.'); return;
-  }
-  if (!accessToken) {
-    setStatus('status3', 'warning', '⚠️ Sign in with Google first.'); return;
-  }
-
-  const pf = document.getElementById('prog-fill');
-  const pl = document.getElementById('prog-label');
-  const pw = document.getElementById('prog-wrap');
-
-  setStatus('status3', 'info', '⏳ Uploading…');
-  pw.style.display = 'block'; pf.style.width = '20%'; pl.textContent = 'Connecting…';
-
+async function uploadToDrive(pf, pl, pw2) {
   const form = new FormData();
   form.append('metadata', new Blob([JSON.stringify({ name: detectedName, parents: [FOLDER_ID] })], { type: 'application/json' }));
   form.append('file', new Blob([pdfBytes], { type: 'application/pdf' }));
 
   try {
-    pf.style.width = '60%'; pl.textContent = `Uploading ${detectedName}…`;
     const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: form
+      method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form
     });
-    pf.style.width = '100%';
 
     if (res.ok) {
-      pl.textContent = 'Done!';
-      setStatus('status3', 'success', `✅ <strong>${detectedName}</strong> saved to Google Drive — no password!`);
+      if (pf) { pf.style.width = '100%'; }
+      if (pl) { pl.textContent = 'Done!'; }
       markDone('num3');
+      setStatus('status3', 'success', `✅ <strong>${detectedName}</strong> saved to Google Drive — no password!`);
 
-      // Reset for next upload — keep signed in
-      pdfBytes = null; detectedName = null;
-      setTimeout(() => {
-        document.getElementById('drop-label').textContent = 'Drop PDF here, or tap to browse';
-        document.getElementById('filein').value = '';
-        document.getElementById('rv-period').textContent = '—';
-        document.getElementById('rv-name').textContent = 'Payslip_YYMM_Warut.pdf';
-        document.getElementById('dl-btn').textContent = '⬇️ Download renamed PDF to device';
-        document.getElementById('dl-btn').disabled = true;
-        lock('step2');
-        markActive('num1', '1'); markActive('num2', '2'); markActive('num3', '3');
-        clearStatus('status1'); clearStatus('status2');
-        pw.style.display = 'none'; pf.style.width = '0%';
-        showUploadReady();
-        setStatus('status3', 'success', '✅ Done! Ready for the next payslip.');
-      }, 2500);
-
+      // Reset upload state after a moment, keep signed in
+      setTimeout(resetForNextFile, 3000);
     } else {
-      pw.style.display = 'none';
+      if (pw2) pw2.style.display = 'none';
       const err = await res.json().catch(() => ({}));
       if (res.status === 401) {
         clearToken(); signOut();
-        setStatus('status3', 'error', '❌ Session expired. Please sign in again.');
+        setStatus('status3', 'error', '❌ Google session expired. Please sign in again (Step 1).');
       } else {
         setStatus('status3', 'error', '❌ Upload failed: ' + (err?.error?.message || 'Error ' + res.status));
       }
     }
   } catch(e) {
-    pw.style.display = 'none';
+    if (pw2) pw2.style.display = 'none';
     setStatus('status3', 'error', '❌ Network error: ' + e.message);
   }
+}
+
+// ── RESET FOR NEXT FILE ───────────────────────────────────
+function resetForNextFile() {
+  pdfBytes = null; detectedName = null;
+
+  // Reset step 2
+  document.getElementById('drop-label').textContent = 'Drop PDF here, or tap to browse';
+  document.getElementById('filein').value = '';
+  clearStatus('status2');
+  markActive('num2', '2');
+
+  // Reset step 3
+  document.getElementById('result-grid').style.display = 'none';
+  document.getElementById('dl-divider').style.display  = 'none';
+  document.getElementById('dl-btn').style.display      = 'none';
+  document.getElementById('prog-wrap').style.display   = 'none';
+  document.getElementById('prog-fill').style.width     = '0%';
+  lock('step3');
+  markActive('num3', '3');
+  setStatus('status3', '');
+
+  // Step 2 stays unlocked (still signed in)
+  setStatus('status2', 'success', '✅ Done! Upload your next payslip.');
 }
 </script>
 </body>
