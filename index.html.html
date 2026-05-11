@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payslip Renamer — Warut</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #f0ede8;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c8f55a;
+    --accent-dim: rgba(200,245,90,0.12);
+    --accent-dim2: rgba(200,245,90,0.06);
+    --red: #ff5f5f;
+    --red-dim: rgba(255,95,95,0.12);
+    --blue: #5fb4ff;
+    --blue-dim: rgba(95,180,255,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200,245,90,0.07) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 520px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; position: relative; z-index: 1; }
+
+  /* Header */
+  .header { margin-bottom: 2.5rem; }
+  .header-tag { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .header-tag::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+  .header h1 { font-size: clamp(1.8rem, 6vw, 2.4rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--text2); font-size: 14px; margin-top: 10px; line-height: 1.6; }
+
+  /* Steps */
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; transition: border-color 0.2s, opacity 0.2s; }
+  .step.locked { opacity: 0.4; pointer-events: none; }
+  .step.done { border-color: rgba(200,245,90,0.25); }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); flex-shrink: 0; transition: all 0.2s; }
+  .step-num.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .step-num.done { border-color: var(--accent); background: var(--accent); color: #0f0f0f; font-weight: 700; }
+  .step-title { font-size: 14px; font-weight: 600; letter-spacing: 0.01em; }
+  .step-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  /* Drop zone */
+  .dropzone { border: 1.5px dashed var(--border2); border-radius: var(--radius-sm); padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--accent-dim2); }
+  .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-dim); }
+  .dropzone-icon { font-size: 2.2rem; margin-bottom: 10px; }
+  .dropzone p { font-size: 14px; color: var(--text2); }
+  .dropzone small { font-size: 12px; color: var(--text3); margin-top: 4px; display: block; }
+  input[type=file] { display: none; }
+
+  /* Password field */
+  .field-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .field-label { font-size: 12px; color: var(--text2); white-space: nowrap; font-family: 'DM Mono', monospace; }
+  .field-input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 14px; color: var(--text); font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.15s; }
+  .field-input:focus { border-color: var(--accent); }
+
+  /* Result box */
+  .result-grid { display: grid; gap: 8px; }
+  .result-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .result-key { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; }
+  .result-val { font-size: 13px; font-weight: 500; }
+  .pill { background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  /* Buttons */
+  .btn { width: 100%; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; font-family: 'Syne', sans-serif; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s; letter-spacing: 0.01em; }
+  .btn:hover { border-color: var(--text2); background: var(--surface2); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-accent { background: var(--accent); color: #0f0f0f; border-color: var(--accent); }
+  .btn-accent:hover { background: #d4ff66; border-color: #d4ff66; }
+  .btn + .btn { margin-top: 8px; }
+
+  /* Google button */
+  .btn-google { background: #fff; color: #3c3c3c; border-color: #ddd; font-family: 'Syne', sans-serif; }
+  .btn-google:hover { background: #f5f5f5; }
+
+  /* Status */
+  .status { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; line-height: 1.5; }
+  .status.info { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(95,180,255,0.2); }
+  .status.success { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(200,245,90,0.2); }
+  .status.error { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,95,95,0.2); }
+  .status.warning { background: rgba(255,180,50,0.1); color: #ffb432; border: 1px solid rgba(255,180,50,0.2); }
+
+  /* Progress */
+  .progress-wrap { margin-top: 12px; }
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: 'DM Mono', monospace; }
+
+  /* Divider */
+  .or-divider { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+  .or-divider span { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Info box */
+  .info-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.6; margin-top: 10px; }
+  .info-box a { color: var(--accent); text-decoration: none; }
+  .info-box a:hover { text-decoration: underline; }
+
+  /* Footer */
+  .footer { text-align: center; margin-top: 2.5rem; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  @media (max-width: 480px) {
+    .container { padding: 1.5rem 1rem 3rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-tag">HMS Payslip Tool</div>
+    <h1>Payslip<br><span>Renamer</span></h1>
+    <p>Upload your salary PDF → auto-detect month & year → rename → save to Google Drive.</p>
+  </div>
+
+  <!-- STEP 1: Upload -->
+  <div class="step" id="step1">
+    <div class="step-header">
+      <div class="step-num active" id="num1">1</div>
+      <div>
+        <div class="step-title">Upload Payslip PDF</div>
+        <div class="step-sub">Password-protected files supported</div>
+      </div>
+    </div>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('filein').click()">
+      <div class="dropzone-icon">📄</div>
+      <p id="drop-label">Drop PDF here, or tap to browse</p>
+      <small>Your file never leaves your device until you upload to Drive</small>
+    </div>
+    <input type="file" id="filein" accept=".pdf">
+    <div class="field-row">
+      <span class="field-label">🔒 Password</span>
+      <input type="password" class="field-input" id="pw-input" value="21819" placeholder="PDF password">
+    </div>
+    <div id="status1"></div>
+  </div>
+
+  <!-- STEP 2: Detect -->
+  <div class="step locked" id="step2">
+    <div class="step-header">
+      <div class="step-num" id="num2">2</div>
+      <div>
+        <div class="step-title">Detected Pay Period</div>
+        <div class="step-sub">Auto-read from PDF content</div>
+      </div>
+    </div>
+    <div class="result-grid">
+      <div class="result-item">
+        <span class="result-key">Pay period</span>
+        <span class="result-val" id="rv-period">—</span>
+      </div>
+      <div class="result-item">
+        <span class="result-key">New filename</span>
+        <span class="pill" id="rv-name">Payslip_YYMM_Warut.pdf</span>
+      </div>
+    </div>
+    <div id="status2"></div>
+  </div>
+
+  <!-- STEP 3: Drive -->
+  <div class="step locked" id="step3">
+    <div class="step-header">
+      <div class="step-num" id="num3">3</div>
+      <div>
+        <div class="step-title">Save to Google Drive</div>
+        <div class="step-sub">Uploads to your designated folder only</div>
+      </div>
+    </div>
+
+    <button class="btn btn-google" id="auth-btn" onclick="startAuth()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 16 19.1 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.5 29.3 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.9-1.9 13.4-5.1l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.2 0-9.7-3.3-11.3-8H6.4C9.9 39.6 16.5 44 24 44z"/><path fill="#EA4335" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C37 37.1 44 32 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Sign in with Google
+    </button>
+
+    <div id="status3"></div>
+    <div id="prog-wrap" style="display:none" class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+      <div class="progress-label" id="prog-label">Uploading…</div>
+    </div>
+
+    <div class="or-divider"><span>or</span></div>
+
+    <button class="btn" id="dl-btn" onclick="downloadFile()" disabled>
+      ⬇️ Download renamed PDF to device
+    </button>
+
+    <div class="info-box">
+      🛡️ This tool only creates new files in your folder. It never reads, modifies, or deletes any existing files.
+    </div>
+  </div>
+
+  <div class="footer">Built for Warut · HMS Payslip Tool · v2.0</div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const FOLDER_ID  = '10CUfI2j_8AjW1oY-RFoSWa0T2duG749p';
+const CLIENT_ID  = '544858630647-ndaad2g7ft8vnluipqfa8f5qjhbafp7o.apps.googleusercontent.com';
+const SCOPES     = 'https://www.googleapis.com/auth/drive.file';
+// ────────────────────────────────────────────────────────
+
+const THAI_MONTHS = {
+  'มกราคม':'01','กุมภาพันธ์':'02','มีนาคม':'03',
+  'เมษายน':'04','พฤษภาคม':'05','มิถุนายน':'06',
+  'กรกฎาคม':'07','สิงหาคม':'08','กันยายน':'09',
+  'ตุลาคม':'10','พฤศจิกายน':'11','ธันวาคม':'12'
+};
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdfBytes     = null;
+let detectedName = null;
+let accessToken  = null;
+let authWin      = null;
+
+// ── HELPERS ─────────────────────────────────────────────
+function unlock(id)   { const el = document.getElementById(id); el.classList.remove('locked'); }
+function markDone(numId) {
+  const el = document.getElementById(numId);
+  el.classList.add('done'); el.textContent = '✓';
+}
+function setStatus(id, type, msg) {
+  document.getElementById(id).innerHTML =
+    `<div class="status ${type}">${msg}</div>`;
+}
+function clearStatus(id) { document.getElementById(id).innerHTML = ''; }
+
+// ── DRAG & DROP ─────────────────────────────────────────
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+});
+document.getElementById('filein').addEventListener('change', e => handleFile(e.target.files[0]));
+
+// ── FILE HANDLER ─────────────────────────────────────────
+async function handleFile(file) {
+  if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
+    setStatus('status1', 'error', '❌ Please select a PDF file.');
+    return;
+  }
+  document.getElementById('drop-label').textContent = '📄 ' + file.name;
+  setStatus('status1', 'info', '⏳ Reading PDF…');
+  unlock('step2');
+
+  const rawBytes = new Uint8Array(await file.arrayBuffer());
+  const pw       = document.getElementById('pw-input').value;
+
+  try {
+    // Extract text with pdf.js (handles password)
+    const loadingTask = pdfjsLib.getDocument({ data: rawBytes.slice(), password: pw });
+    const pdf  = await loadingTask.promise;
+    let   text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const tc   = await page.getTextContent();
+      text += tc.items.map(t => t.str).join(' ') + '\n';
+    }
+
+    const parsed = parsePayslip(text);
+    if (!parsed) {
+      setStatus('status1', 'error', '❌ Could not detect pay period. Wrong password or unexpected format?');
+      return;
+    }
+
+    const { month, year, monthNum } = parsed;
+    const yy = String(year).slice(-2);
+    detectedName = `Payslip_${yy}${monthNum}_Warut.pdf`;
+
+    document.getElementById('rv-period').textContent = `${month} ${year}`;
+    document.getElementById('rv-name').textContent   = detectedName;
+    document.getElementById('dl-btn').textContent    = `⬇️ Download ${detectedName}`;
+
+    markDone('num1');
+    markDone('num2');
+    setStatus('status1', 'success', `✅ File read successfully.`);
+    setStatus('status2', 'success', `✅ Detected: <strong>${month} ${year}</strong> → <strong>${detectedName}</strong>`);
+
+    // Decrypt PDF so it's unlocked when saved
+    pdfBytes = await decryptPDF(rawBytes, pw);
+
+    unlock('step3');
+    document.getElementById('num3').classList.add('active');
+    document.getElementById('dl-btn').disabled = false;
+
+  } catch (err) {
+    setStatus('status1', 'error', '❌ Error: ' + err.message);
+  }
+}
+
+// ── PARSE THAI MONTH ────────────────────────────────────
+function parsePayslip(text) {
+  const patterns = [
+    /งวด[:\s]+เดือน\s+([ก-๙]+)\s+ปี\s+(\d{4})/,
+    /เดือน\s+([ก-๙]+)\s+ปี\s+(\d{4})/,
+  ];
+  for (const rx of patterns) {
+    const m = text.match(rx);
+    if (m) {
+      const thaiMonth = m[1].trim();
+      const year      = parseInt(m[2]);
+      const monthNum  = THAI_MONTHS[thaiMonth];
+      if (monthNum) return { month: thaiMonth, year, monthNum };
+    }
+  }
+  return null;
+}
+
+// ── DECRYPT PDF ─────────────────────────────────────────
+async function decryptPDF(srcBytes, password) {
+  try {
+    const doc = await PDFLib.PDFDocument.load(srcBytes, {
+      password, ignoreEncryption: false, throwOnInvalidObject: false
+    });
+    return await doc.save();
+  } catch {
+    return srcBytes; // not encrypted — return as-is
+  }
+}
+
+// ── DOWNLOAD ────────────────────────────────────────────
+function downloadFile() {
+  if (!pdfBytes || !detectedName) return;
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = detectedName; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── GOOGLE AUTH ─────────────────────────────────────────
+function startAuth() {
+  clearStatus('status3');
+
+  // Build redirect URI from current page
+  const redirectUri = window.location.origin + window.location.pathname;
+
+  // If we already have a token from URL hash (after redirect back)
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if (hash.get('access_token')) {
+    accessToken = hash.get('access_token');
+    history.replaceState(null, '', window.location.pathname);
+    onSignedIn();
+    return;
+  }
+
+  const params = new URLSearchParams({
+    client_id:     CLIENT_ID,
+    redirect_uri:  redirectUri,
+    response_type: 'token',
+    scope:         SCOPES,
+    prompt:        'select_account'
+  });
+
+  // Redirect the whole page (works on mobile)
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+function onSignedIn() {
+  setStatus('status3', 'success', '✅ Signed in! Tap the button below to upload.');
+  const btn = document.getElementById('auth-btn');
+  btn.innerHTML = '☁️ Upload to Google Drive';
+  btn.className = 'btn btn-accent';
+  btn.onclick   = uploadToDrive;
+}
+
+// Check on page load if returning from OAuth redirect
+window.addEventListener('load', () => {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if (hash.get('access_token')) {
+    accessToken = hash.get('access_token');
+    history.replaceState(null, '', window.location.pathname);
+    // Restore state if PDF was already processed
+    unlock('step3');
+    document.getElementById('num3').classList.add('active');
+    onSignedIn();
+    setStatus('status3', 'success', '✅ Signed in! Now upload your PDF and tap "Upload to Google Drive".');
+  }
+});
+
+// ── UPLOAD TO DRIVE ──────────────────────────────────────
+async function uploadToDrive() {
+  if (!pdfBytes || !detectedName) {
+    setStatus('status3', 'warning', '⚠️ Please upload and process a PDF first.');
+    return;
+  }
+  if (!accessToken) {
+    setStatus('status3', 'warning', '⚠️ Please sign in with Google first.');
+    return;
+  }
+
+  const ds = document.getElementById('status3');
+  const pw = document.getElementById('prog-wrap');
+  const pf = document.getElementById('prog-fill');
+  const pl = document.getElementById('prog-label');
+
+  setStatus('status3', 'info', '⏳ Uploading…');
+  pw.style.display = 'block';
+  pf.style.width   = '20%';
+  pl.textContent   = 'Connecting to Google Drive…';
+
+  const metadata = { name: detectedName, parents: [FOLDER_ID] };
+  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
+  const form     = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', blob);
+
+  try {
+    pf.style.width = '60%';
+    pl.textContent = `Uploading ${detectedName}…`;
+
+    const res = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form }
+    );
+
+    pf.style.width = '100%';
+
+    if (res.ok) {
+      const data = await res.json();
+      pl.textContent = 'Done!';
+      setStatus('status3', 'success',
+        `✅ <strong>${detectedName}</strong> saved to your Google Drive folder!`);
+      markDone('num3');
+      document.getElementById('auth-btn').innerHTML = '✅ Uploaded successfully';
+      document.getElementById('auth-btn').disabled = true;
+    } else {
+      const err = await res.json();
+      pw.style.display = 'none';
+      setStatus('status3', 'error',
+        '❌ Upload failed: ' + (err.error?.message || 'Unknown error (code ' + res.status + ')'));
+    }
+  } catch (e) {
+    pw.style.display = 'none';
+    setStatus('status3', 'error', '❌ Network error: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
