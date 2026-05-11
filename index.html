@@ -355,7 +355,7 @@ function startAuth() {
   clearStatus('status3');
 
   // Build redirect URI from current page
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = 'https://warutcha.github.io/payslip/';
 
   // If we already have a token from URL hash (after redirect back)
   const hash = new URLSearchParams(window.location.hash.slice(1));
