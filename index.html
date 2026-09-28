@@ -199,7 +199,7 @@
     <div class="info-box" style="margin-top:10px">🛡️ Only creates new files. Never modifies or deletes existing files. Saved PDF has <strong>no password</strong>.</div>
   </div>
 
-  <div class="footer">Built for Warut · HMS Payslip Tool · v7.0</div>
+  <div class="footer">Built for Warut · HMS Payslip Tool · v7.1</div>
 </div>
 
 <script>
@@ -261,9 +261,17 @@ function signOut(){
   setStatus('status-auth','','');
 }
 
+// Always resolve to the FOLDER url (strips any trailing filename like index.html).
+// This keeps the redirect_uri stable and matching what's authorized in Google Cloud,
+// even if the page was opened as .../payslip/index.html (e.g. a stale home-screen icon).
+function getRedirectUri(){
+  const path = window.location.pathname.replace(/[^/]*$/, '');
+  return window.location.origin + path;
+}
+
 function startAuth(){
   setStatus('status-auth','info','⏳ Opening Google sign-in…');
-  const redirectUri=window.location.origin+window.location.pathname;
+  const redirectUri=getRedirectUri();
   const url='https://accounts.google.com/o/oauth2/v2/auth?'+new URLSearchParams({
     client_id:CLIENT_ID,redirect_uri:redirectUri,response_type:'token',scope:SCOPES,prompt:'select_account'
   });

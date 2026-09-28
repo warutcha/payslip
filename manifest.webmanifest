@@ -2,7 +2,7 @@
   "name": "Payslip Renamer",
   "short_name": "Payslip",
   "description": "Sign in once, upload your payslip, auto-renamed and saved to Google Drive.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
